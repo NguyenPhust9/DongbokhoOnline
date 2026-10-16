@@ -17,6 +17,41 @@ const config = {
   createBatchSize: 25
 };
 
+test("only create products present in selected stock ledger, including explicit zero stock", async () => {
+  const { fetchImpl, state } = makeFetch({
+    products: [
+      { product_code: "ONL", product_name: "Online item" },
+      { product_code: "ZERO", product_name: "Online zero item" },
+      { product_code: "OTHER", product_name: "Other stock item" }
+    ],
+    inventory: [
+      { product_code: " onl ", main_stock_quantity: 5, order_quantity: 3 },
+      { product_code: "ZERO", main_stock_quantity: 0, order_quantity: 0 }
+    ]
+  });
+  const preview = await previewSync(config, { fetchImpl });
+  assert.equal(preview.source.products, 3);
+  assert.equal(preview.source.inventory_products, 2);
+  assert.equal(preview.plan.create_products, 2);
+  assert.equal(state.createdBodies.length, 0);
+  const result = await commitSync(config, { fetchImpl });
+  assert.equal(result.result.created, 2);
+  assert.deepEqual(state.createdBodies.map((body) => body.product.custom_id), ["ONL", "ZERO"]);
+});
+
+test("existing SKU absent from selected stock is still cleared to zero", () => {
+  const plan = buildPlan({
+    products: [{ product_code: "OLD", product_name: "Old item" }],
+    inventory: [],
+    variations: [{ id: "v1", custom_id: "OLD" }],
+    warehouseId: "w1"
+  });
+  assert.equal(plan.create.length, 0);
+  assert.equal(plan.update.length, 1);
+  assert.equal(plan.update[0].total_quantity, 0);
+  assert.equal(plan.update[0].remain_quantity, 0);
+});
+
 function response(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
 }
@@ -144,7 +179,7 @@ test("preview không thực hiện POST ghi dữ liệu", async () => {
   const { fetchImpl, state } = makeFetch({ products: [{ product_code: "A", product_name: "Sản phẩm A" }] });
   const result = await previewSync(config, { fetchImpl });
   assert.equal(result.mode, "preview");
-  assert.equal(result.plan.create_products, 1);
+  assert.equal(result.plan.create_products, 0);
   const writePosts = state.calls.filter((call) => call.method === "POST" && call.url.pathname !== "/api/v2/Account");
   assert.equal(writePosts.length, 0);
 });
@@ -255,9 +290,8 @@ test("mã AMIS trùng, thiếu trường và không có dòng tồn đều đư�
     ],
     inventory: [], variations: [], warehouseId: "w1"
   });
-  assert.equal(plan.create.length, 1);
-  assert.equal(plan.create[0].remain_quantity, 0);
-  assert.equal(plan.skipped.length, 4);
+  assert.equal(plan.create.length, 0);
+  assert.equal(plan.skipped.length, 5);
 });
 
 test("batch cập nhật tồn kho không vượt quá 50 variation", async () => {
