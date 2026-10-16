@@ -1,8 +1,9 @@
 name: Inventory sync
 
 on:
-  schedule:
-    - cron: '*/5 * * * *'
+  # Enable after validating preview on the new repository:
+  # schedule:
+  #   - cron: '*/5 * * * *'
   workflow_dispatch:
     inputs:
       mode:
@@ -39,4 +40,4 @@ jobs:
             -H "Authorization: Bearer $oidc_token" \
             -H "Content-Type: application/json" \
             --data "{\"mode\":\"$MODE\"}" \
-            https://amis-pancake-inventory-ten.vercel.app/api/github-sync
+            https://amis-pancake-inventory.vercel.app/api/github-sync

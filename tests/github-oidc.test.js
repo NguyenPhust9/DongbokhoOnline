@@ -12,9 +12,9 @@ function token(overrides = {}) {
   const payload = Buffer.from(JSON.stringify({
     iss: "https://token.actions.githubusercontent.com",
     aud: "amis-pancake-inventory-sync",
-    repository: "LeDuyKhangZz/amis-pancake-inventory",
+    repository: "NguyenPhust9/DongbokhoOnline",
     ref: "refs/heads/main",
-    job_workflow_ref: "LeDuyKhangZz/amis-pancake-inventory/.github/workflows/inventory-sync.yml@refs/heads/main",
+    job_workflow_ref: "NguyenPhust9/DongbokhoOnline/.github/workflows/inventory-sync.yml@refs/heads/main",
     event_name: "workflow_dispatch",
     iat: now - 10,
     exp: now + 300,
