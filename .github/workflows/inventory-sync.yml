@@ -1,9 +1,8 @@
 name: Inventory sync
 
 on:
-  # Enable after validating preview on the new repository:
-  # schedule:
-  #   - cron: '*/5 * * * *'
+  schedule:
+    - cron: '*/5 * * * *'
   workflow_dispatch:
     inputs:
       mode:
