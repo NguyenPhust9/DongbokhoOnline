@@ -13,9 +13,23 @@ const config = {
   pancakeApiKey: "test-pancake-key",
   pancakeWarehouseId: "",
   syncSecret: "test-sync-secret",
-  cronSecret: "test-cron-secret",
-  createBatchSize: 25
+  cronSecret: "test-cron-secret"
 };
+
+test("commit creates all 46 products even when legacy batch limit is 25", async () => {
+  const products = Array.from({ length: 46 }, (_, i) => ({ product_code: `NEW${i}`, product_name: `Item ${i}` }));
+  const inventory = products.map((product) => ({ product_code: product.product_code, main_stock_quantity: 2, order_quantity: 1 }));
+  const { fetchImpl, state } = makeFetch({ products, inventory });
+  const result = await commitSync({ ...config, createBatchSize: 25 }, { fetchImpl });
+  assert.equal(state.createdBodies.length, 46);
+  assert.equal(result.result.created, 46);
+  assert.equal(result.result.failed, 0);
+  assert.equal(result.remaining_to_create, 0);
+  assert.equal(result.run_again_required, false);
+  const second = await commitSync(config, { fetchImpl });
+  assert.equal(second.result.created, 0);
+  assert.equal(state.createdBodies.length, 46);
+});
 
 test("only create products with positive stock in selected stock ledger", async () => {
   const { fetchImpl, state } = makeFetch({

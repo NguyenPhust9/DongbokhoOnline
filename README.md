@@ -124,7 +124,6 @@ Trước khi đẩy, kiểm tra `git status` và bảo đảm `.env`, `.env.loca
 | `SYNC_SECRET` | Có | Chuỗi ngẫu nhiên dài bảo vệ chạy thủ công |
 | `CRON_SECRET` | Có | Chuỗi ngẫu nhiên dài khác bảo vệ Cron |
 | `MISA_WEBHOOK_SECRET` | Khi dùng webhook | Chuỗi ngẫu nhiên riêng bảo vệ `/api/misa-webhook` |
-| `CREATE_BATCH_SIZE` | Không | Mặc định `25`; phải là số nguyên dương |
 
 Không thêm tiền tố `NEXT_PUBLIC_`. Có thể tạo chuỗi bí mật trên máy, ví dụ:
 
@@ -202,7 +201,7 @@ Nếu có nhiều kho, API sẽ trả lỗi an toàn thay vì tự đoán. Đi�
 
 ## 7. Chạy commit thủ công
 
-Chỉ chạy khi kết quả preview đúng. Mỗi lần commit chỉ tạo tối đa `CREATE_BATCH_SIZE` sản phẩm mới, nhưng vẫn cập nhật tồn của toàn bộ SKU đã tồn tại theo batch tối đa 50 variation.
+Chỉ chạy khi kết quả preview đúng. Mỗi lần commit tạo toàn bộ sản phẩm còn thiếu có tồn kho AMIS lớn hơn 0, rồi cập nhật tồn của các SKU đã tồn tại theo batch tối đa 50 variation. Không còn giới hạn CREATE_BATCH_SIZE; biến cũ trên Vercel không còn tác dụng. Lỗi API hoặc hết thời gian thực thi vẫn có thể khiến cần chạy lại; kiểm tra remaining_to_create và failed sau mỗi lần chạy.
 
 Bash:
 
