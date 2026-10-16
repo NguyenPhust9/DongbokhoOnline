@@ -17,7 +17,7 @@ const config = {
   createBatchSize: 25
 };
 
-test("only create products present in selected stock ledger, including explicit zero stock", async () => {
+test("only create products with positive stock in selected stock ledger", async () => {
   const { fetchImpl, state } = makeFetch({
     products: [
       { product_code: "ONL", product_name: "Online item" },
@@ -32,11 +32,24 @@ test("only create products present in selected stock ledger, including explicit 
   const preview = await previewSync(config, { fetchImpl });
   assert.equal(preview.source.products, 3);
   assert.equal(preview.source.inventory_products, 2);
-  assert.equal(preview.plan.create_products, 2);
+  assert.equal(preview.plan.create_products, 1);
   assert.equal(state.createdBodies.length, 0);
   const result = await commitSync(config, { fetchImpl });
-  assert.equal(result.result.created, 2);
-  assert.deepEqual(state.createdBodies.map((body) => body.product.custom_id), ["ONL", "ZERO"]);
+  assert.equal(result.result.created, 1);
+  assert.deepEqual(state.createdBodies.map((body) => body.product.custom_id), ["ONL"]);
+});
+
+test("existing SKU with explicit zero stock is updated rather than skipped", () => {
+  const plan = buildPlan({
+    products: [{ product_code: "ZERO", product_name: "Zero item" }],
+    inventory: [{ product_code: "ZERO", main_stock_quantity: 0, order_quantity: 0 }],
+    variations: [{ id: "v1", custom_id: "ZERO" }],
+    warehouseId: "w1"
+  });
+  assert.equal(plan.create.length, 0);
+  assert.equal(plan.update.length, 1);
+  assert.equal(plan.update[0].total_quantity, 0);
+  assert.equal(plan.update[0].remain_quantity, 0);
 });
 
 test("existing SKU absent from selected stock is still cleared to zero", () => {
